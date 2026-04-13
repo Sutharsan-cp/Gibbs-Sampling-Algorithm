@@ -1,10 +1,3 @@
-"""
-LinkedIn Random Walker — Gibbs Sampling Label Propagation
-Streamlit App (app.py)
-
-Run with:  streamlit run app.py
-"""
-
 import streamlit as st
 import numpy as np
 import networkx as nx

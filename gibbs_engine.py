@@ -1,8 +1,3 @@
-"""
-Gibbs Sampling Engine for Homophily-Based Label Propagation
-Based on Algorithm 2: GS (Gibbs Sampling Algorithm)
-"""
-
 import numpy as np
 import networkx as nx
 from collections import defaultdict, Counter
@@ -11,13 +6,6 @@ import random
 
 
 class GibbsSampler:
-    """
-    Implements Gibbs Sampling for label propagation on graphs.
-    
-    Core idea: Uses the homophily principle — nodes tend to have
-    the same label as their neighbors. Iteratively samples labels
-    for each node conditioned on its neighborhood.
-    """
 
     def __init__(
         self,
@@ -28,15 +16,7 @@ class GibbsSampler:
         num_samples: int = 200,
         alpha: float = 1.0,
     ):
-        """
-        Args:
-            graph:       The input graph (NetworkX)
-            labels:      All possible label values, e.g. ['Tech', 'Finance', 'HR']
-            observed:    Dict mapping node_id -> known label (seed nodes)
-            burn_in:     Number of burn-in iterations (B)
-            num_samples: Number of sampling iterations after burn-in (S)
-            alpha:       Dirichlet smoothing parameter
-        """
+        
         self.G = graph
         self.labels = labels
         self.label_index = {l: i for i, l in enumerate(labels)}
@@ -66,7 +46,7 @@ class GibbsSampler:
     # ------------------------------------------------------------------ #
 
     def _bootstrap(self):
-        """Initialize Y using only observed neighbours (Algorithm line 1-4)."""
+        
         for node in self.nodes:
             if node in self.observed:
                 self.Y[node] = self.observed[node]
@@ -89,10 +69,6 @@ class GibbsSampler:
     # ------------------------------------------------------------------ #
 
     def _compute_a(self, node: int) -> np.ndarray:
-        """
-        Compute the conditional distribution a_i for node `node`
-        given current neighbor assignments (with Dirichlet smoothing).
-        """
         counts = np.full(self.L, self.alpha)  # smoothing prior
         for nb in self.G.neighbors(node):
             lbl = self.Y.get(nb)
@@ -112,10 +88,6 @@ class GibbsSampler:
     # ------------------------------------------------------------------ #
 
     def run(self, progress_callback=None) -> Dict[int, str]:
-        """
-        Execute the full Gibbs Sampling algorithm.
-        Returns final labels for all nodes.
-        """
         total_iters = self.B + self.S
 
         # ---------- Burn-in (lines 5-11) ----------
@@ -157,7 +129,6 @@ class GibbsSampler:
         return final
 
     def get_confidence(self) -> Dict[int, float]:
-        """Return confidence score (max count / total samples) per node."""
         conf = {}
         for node in self.nodes:
             total = self.counts[node].sum()
@@ -168,7 +139,6 @@ class GibbsSampler:
         return conf
 
     def get_label_distribution(self, node: int) -> Dict[str, float]:
-        """Return normalized label probability distribution for a node."""
         total = self.counts[node].sum()
         if total == 0:
             return {l: 1.0 / self.L for l in self.labels}
@@ -188,25 +158,13 @@ def generate_linkedin_graph(
     homophily: float = 0.8,
     seed: int = 42,
 ) -> Tuple[nx.Graph, Dict[int, str], List[str]]:
-    """
-    Generate a synthetic LinkedIn-like graph with community structure.
-    
-    Args:
-        n_nodes:       Total number of professional nodes
-        n_communities: Number of job sectors (labels)
-        homophily:     Probability [0,1] that edges connect same-sector nodes
-        seed:          Random seed
-    
-    Returns:
-        (graph, true_labels, label_names)
-    """
+
     rng = np.random.default_rng(seed)
     random.seed(seed)
 
     SECTORS = ["Tech", "Finance", "Healthcare", "Marketing", "Legal", "Education"]
     label_names = SECTORS[:n_communities]
 
-    # Assign ground-truth labels
     true_labels: Dict[int, str] = {}
     community_nodes: Dict[str, List[int]] = defaultdict(list)
     for node in range(n_nodes):
@@ -224,10 +182,10 @@ def generate_linkedin_graph(
         attempts += 1
         u = rng.integers(n_nodes)
         if rng.random() < homophily:
-            # Same community edge
+
             candidates = community_nodes[true_labels[u]]
         else:
-            # Cross-community edge
+
             candidates = list(range(n_nodes))
         v = rng.choice(candidates)
         if u != v and not G.has_edge(u, v):
@@ -247,7 +205,7 @@ def evaluate(
     predicted: Dict[int, str],
     observed: Set[int],
 ) -> Dict[str, float]:
-    """Compute accuracy on unobserved (unlabelled) nodes only."""
+
     total = correct = 0
     for node, pred in predicted.items():
         if node not in observed:
